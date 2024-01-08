@@ -1,10 +1,10 @@
 # Progetto-SOD
 
-##OBIETTIVI
+##OBIETTIVI<br>
 Gli obietti di questo progetto consistono in: 
 - Acquisire dati dal sensore di luminosità e dal sensore di temperatura, pressione e altitudine.
 - Gestire la comunicazione tra ESP32 e i vari sensori tramite protocollo MQTT
-- Visualizzare i dati acquisiti tramite un interfaccia web
+- Visualizzare i dati acquisiti tramite un interfaccia web <br>
 
 ##PROGETTAZIONE E SVILUPPO
 ###Ambiente di sviluppo
