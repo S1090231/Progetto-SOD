@@ -14,6 +14,7 @@ TaskHandle_t TaskBH1750;
 TaskHandle_t TaskRTC;
 TaskHandle_t TaskMQTT; 
 
+//Inizializzazione del server Web sulla porta 80
 AsyncWebServer server(80);
 
 Adafruit_BMP280 bmp;
@@ -22,17 +23,17 @@ BH1750 lightMeter;
 
 const char* ssid = "TP-Link_BB96";
 const char* password = "Casagatti1";
-const char* mqtt_server = "192.168.1.105";
+const char* mqtt_server = "192.168.1.105"; //Indirizzo IP del server MQTT
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
+//Funzione per riconnettersi al broker MQTT in caso di disconnessione
 void reconnect(){
   while(!client.connected()){
     Serial.print("Prova connessione MQTT...");
     if(client.connect("ESP32Client")){
       Serial.println("Connesso!");
-      //client.subscribe("sensor_data");
     }else{
       Serial.print("Fallito, rc=");
       Serial.print(client.state());
@@ -42,6 +43,7 @@ void reconnect(){
   }
 }
 
+//Task per la gestione della connessione e comunicazione MQTT
 void mqttTask(void *pvParameters){
   while(1){
     if(!client.connected()){
@@ -52,6 +54,7 @@ void mqttTask(void *pvParameters){
   }
 }
 
+//Task per la lettura del timestamp dal modulo RTC
 void readRTCData(void *pvParameters){
     TickType_t lastWakeTime = xTaskGetTickCount();
 
@@ -78,6 +81,7 @@ void readRTCData(void *pvParameters){
     }
   }
 
+//Task per la lettura dei dati dal sensore BMP280
   void readBMP280Data(void *pvParameters){
     while(1){
   Serial.print("Temperature: ");
@@ -90,6 +94,7 @@ void readRTCData(void *pvParameters){
 }
   }
 
+//Task per la lettura dei dati dal sensore BH1750
   void readBH1750Data(void *pvParameters){
     while(1){
   float lux = lightMeter.readLightLevel();
@@ -101,6 +106,7 @@ void readRTCData(void *pvParameters){
 
   }
   }
+
 
   void setup() {
   Serial.begin(115200);
@@ -121,7 +127,7 @@ void readRTCData(void *pvParameters){
     while(1);
   }
 
-  
+  //Connessione alla WiFi
   WiFi.begin(ssid, password );
   while(WiFi.status() != WL_CONNECTED) {
     delay(250);
@@ -130,6 +136,7 @@ void readRTCData(void *pvParameters){
   Serial.println("WiFi Connesso");
   Serial.println(WiFi.localIP());
 
+//Configurazione del client MQTT
   client.setServer(mqtt_server, 1883);
 
   xTaskCreatePinnedToCore(
@@ -139,7 +146,7 @@ void readRTCData(void *pvParameters){
     NULL,
     1,
     &TaskBMP280,
-    1);
+    1); //core 1
 
     xTaskCreatePinnedToCore(
     readBH1750Data,
