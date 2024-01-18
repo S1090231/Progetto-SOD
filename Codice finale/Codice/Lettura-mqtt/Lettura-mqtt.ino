@@ -22,7 +22,7 @@ BH1750 lightMeter;
 
 const char* ssid = "TP-Link_BB96";
 const char* password = "Casagatti1";
-const char* mqtt_server = "192.168.1.110";
+const char* mqtt_server = "192.168.1.105";
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -184,4 +184,13 @@ void readRTCData(void *pvParameters){
     server.begin();
 }
 
-void loop(){}
+void loop(){
+  if(!client.connected()){
+    reconnect();
+  }
+
+  float temperatura = bmp.readTemperature();
+
+  String payload = String(temperatura);
+  client.publish("temperatura", payload.c_str());
+}
