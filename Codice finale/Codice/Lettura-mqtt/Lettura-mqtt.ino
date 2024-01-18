@@ -190,7 +190,27 @@ void loop(){
   }
 
   float temperatura = bmp.readTemperature();
+  float pressure = bmp.readPressure() / 100.0F;
+  uint16_t luminosita = lightMeter.readLightLevel();
+  DateTime now = rtc.now();
+  String timestamp = String(now.year()) + "-" +
+                     String(now.month()) + "-" +
+                     String(now.day()) + " " + 
+                     String(now.hour()) + ":" +
+                     String(now.minute()) + ":" +
+                     String(now.second()); 
 
-  String payload = String(temperatura);
-  client.publish("temperatura", payload.c_str());
+  String payloadTemperatura = "Temperatura attuale: " +String(temperatura) + "°C";
+  client.publish("temperatura", payloadTemperatura.c_str());
+
+
+  String payloadPressure = "Pressure attuale: " +String(pressure) + "hPa";
+  client.publish("pressure", payloadPressure.c_str());
+
+  String payloadLuminosita = "Luminosità attuale: " +String(luminosita) + "lux";
+  client.publish("luminosita", payloadLuminosita.c_str());
+
+  client.publish("timestamp", timestamp.c_str());
+
+  delay(5000);
 }
