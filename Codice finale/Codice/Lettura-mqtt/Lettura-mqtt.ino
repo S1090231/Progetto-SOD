@@ -3,19 +3,20 @@
 #include <Adafruit_BMP280.h>
 #include <RTClib.h>
 #include <WiFi.h>
-#include <AsyncTCP.h>
-#include <ESPAsyncWebServer.h>
+//#include <AsyncTCP.h>
+//#include <ESPAsyncWebServer.h>
 #include <PubSubClient.h>
 #include <BH1750.h>
 
 RTC_PCF8523 rtc;
-TaskHandle_t TaskBMP280;
-TaskHandle_t TaskBH1750;
-TaskHandle_t TaskRTC;
+//TaskHandle_t TaskBMP280;
+//TaskHandle_t TaskBH1750;
+TaskHandle_t TaskSensorData;
 TaskHandle_t TaskMQTT; 
+SemaphoreHandle_t dataMutex;
 
 //Inizializzazione del server Web sulla porta 80
-AsyncWebServer server(80);
+//AsyncWebServer server(80);
 
 Adafruit_BMP280 bmp;
 BH1750 lightMeter;
@@ -24,27 +25,70 @@ BH1750 lightMeter;
 const char* ssid = "TP-Link_BB96";
 const char* password = "Casagatti1";
 const char* mqtt_server = "192.168.1.105"; //Indirizzo IP del server MQTT
+const int mqtt_port = 1883;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-//Funzione per riconnettersi al broker MQTT in caso di disconnessione
-void reconnect(){
-  while(!client.connected()){
-    Serial.print("Prova connessione MQTT...");
-    if(client.connect("ESP32Client")){
-      Serial.println("Connesso!");
-    }else{
-      Serial.print("Fallito, rc=");
-      Serial.print(client.state());
-      Serial.println("Ritenta tra 5 secondi");
-      delay(5000);
-    }
+float luminosity, temperature, pressure;
+String timestamp =" ";
+
+void readSensorData(void *pvParameters){
+  while(1){
+    float currentLuminosity = lightMeter.readLightLevel();
+    float currentTemperature = bmp.readTemperature();
+    float currentPressure = bmp.readPressure() / 100.0F;
+
+    DateTime now = rtc.now();
+    String currentTimestamp = String(now.year()) + "-" +
+                              String(now.month()) + "-" + 
+                              String(now.day()) + "" +
+                              String(now.hour()) + ":" +
+                              String(now.minute()) + ":" +
+                              String(now.second());
+
+    xSemaphoreTake(dataMutex, portMAX_DELAY);
+
+    luminosity = currentLuminosity;
+    temperature = currentTemperature;
+    pressure = currentPressure;
+    timestamp = currentTimestamp;
+
+    xSemaphoreGive(dataMutex);
+
+    vTaskDelay(5000 / portTICK_PERIOD_MS);
   }
 }
 
+//Funzione per riconnettersi al broker MQTT in caso di disconnessione
+void sendMQTTData(void *pvParameters){
+  while(1){
+    if(!client.connected()){
+      if(client.connect("ESP32Client")){
+      Serial.println("Connesso al broker MQTT!");
+    }else{
+      Serial.println("Connessione al broker MQTT fallita");
+      vTaskDelay(5000 / portTICK_PERIOD_MS);
+      continue;
+    }
+  }
+
+  xSemaphoreTake(dataMutex, portMAX_DELAY);
+
+  client.publish("luminosity", String(luminosity).c_str());
+  client.publish("temperature", String(temperature).c_str());
+  client.publish("pressure", String(pressure).c_str());
+  client.publish("timestamp", timestamp.c_str());
+
+  xSemaphoreGive(dataMutex);
+
+  vTaskDelay(1000 / portTICK_PERIOD_MS);
+  }
+}
+
+
 //Task per la gestione della connessione e comunicazione MQTT
-void mqttTask(void *pvParameters){
+/*void mqttTask(void *pvParameters){
   while(1){
     if(!client.connected()){
       reconnect();
@@ -52,10 +96,10 @@ void mqttTask(void *pvParameters){
     client.loop();
     vTaskDelay(1000/ portTICK_PERIOD_MS);
   }
-}
+}*/
 
 //Task per la lettura del timestamp dal modulo RTC
-void readRTCData(void *pvParameters){
+/*void readRTCData(void *pvParameters){
     TickType_t lastWakeTime = xTaskGetTickCount();
 
     while(1){
@@ -105,7 +149,7 @@ void readRTCData(void *pvParameters){
   vTaskDelay(5000 / portTICK_PERIOD_MS);
 
   }
-  }
+  }*/
 
 
   void setup() {
@@ -127,6 +171,8 @@ void readRTCData(void *pvParameters){
     while(1);
   }
 
+  dataMutex = xSemaphoreCreateMutex();
+
   //Connessione alla WiFi
   WiFi.begin(ssid, password );
   while(WiFi.status() != WL_CONNECTED) {
@@ -137,18 +183,18 @@ void readRTCData(void *pvParameters){
   Serial.println(WiFi.localIP());
 
 //Configurazione del client MQTT
-  client.setServer(mqtt_server, 1883);
+  client.setServer(mqtt_server, mqtt_port);
 
   xTaskCreatePinnedToCore(
-    readBMP280Data,
-    "TaskBMP280",
+    readSensorData,
+    "TaskSensorData",
     10000,
     NULL,
     1,
-    &TaskBMP280,
-    1); //core 1
+    &TaskSensorData,
+    0); //core 0
 
-    xTaskCreatePinnedToCore(
+    /*xTaskCreatePinnedToCore(
     readBH1750Data,
     "TaskBH1750",
     10000,
@@ -164,19 +210,19 @@ void readRTCData(void *pvParameters){
     NULL,
     1,
     &TaskRTC,
-    0);
+    0);*/
 
     xTaskCreatePinnedToCore(
-    mqttTask,
-    "TaskMqtt",
+    sendMQTTData,
+    "TaskMQTT",
     10000,
     NULL,
     1,
     &TaskMQTT,
-    1);
+    1); }
 
     //Inizializzazione Server Web
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    /*server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
       DateTime now = rtc.now();
           String html = "<html><body>";
           html += "<h1>Sensor data</h1>";
@@ -189,10 +235,10 @@ void readRTCData(void *pvParameters){
           request->send(200, "text/html", html);
     });
     server.begin();
-}
+}*/
 
 void loop(){
-  if(!client.connected()){
+  /*if(!client.connected()){
     reconnect();
   }
 
@@ -219,5 +265,5 @@ void loop(){
 
   client.publish("timestamp", timestamp.c_str());
 
-  delay(5000);
+  delay(5000);*/
 }
