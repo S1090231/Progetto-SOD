@@ -7,6 +7,6 @@ Gli obietti di questo progetto consistono in:
 - Visualizzare i dati acquisiti tramite un interfaccia web 
 
 <p align="center" style="margin-top: 10px;margin-bottom: 10px">
-<img src="https://github.com/S1090231/Progetto-SOD/blob/main/Arduino.png" width="550" > 
+<img src="https://github.com/S1090231/Progetto-SOD/blob/main/schema iniziale.png" width="550" > 
 </p>
 
