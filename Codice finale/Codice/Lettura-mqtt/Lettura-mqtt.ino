@@ -21,7 +21,7 @@ BH1750 lightMeter;
 
 
 const char* ssid = "TP-Link_BB96";
-const char* password = "*******";
+const char* password = "Casagatti1";
 const char* mqtt_server = "192.168.1.105"; //Indirizzo IP del server MQTT
 const int mqtt_port = 1883;
 
@@ -57,6 +57,16 @@ xSemaphoreTake(dataMutex, portMAX_DELAY);
 //rilascia il semaforo acquisito precedentemente
 xSemaphoreGive(dataMutex);
 
+Serial.println("Sensor data: ");
+Serial.print("Luminosity: ");
+Serial.println(luminosity);
+Serial.print("Temperature: ");
+Serial.println(temperature);
+Serial.print("Pressure: ");
+Serial.println(pressure);
+Serial.print("Timestamp: ");
+Serial.println(timestamp);
+
 vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(5000));
 }
 }
@@ -84,6 +94,8 @@ void sendMQTTData(void *pvParameters){
   client.publish("timestamp", timestamp.c_str());
 
   xSemaphoreGive(dataMutex);
+
+  Serial.println("MQTT Data Sent");
 
   vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(1000));
   }
