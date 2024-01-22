@@ -33,6 +33,7 @@ String timestamp =" ";
 
 //task per la lettura dei dati dai sensori 
 void readSensorData(void *pvParameters){
+  TickType_t lastWakeTime = xTaskGetTickCount();
   while(1){
     float currentLuminosity = lightMeter.readLightLevel();
     float currentTemperature = bmp.readTemperature();
@@ -56,20 +57,21 @@ xSemaphoreTake(dataMutex, portMAX_DELAY);
 //rilascia il semaforo acquisito precedentemente
 xSemaphoreGive(dataMutex);
 
-vTaskDelay(5000 / portTICK_PERIOD_MS);
+vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(5000));
 }
 }
 
 
 //Funzione per riconnettersi al broker MQTT in caso di disconnessione e per inviare dati
 void sendMQTTData(void *pvParameters){
+  TickType_t lastWakeTime = xTaskGetTickCount();
   while(1){
     if(!client.connected()){
       if(client.connect("ESP32Client")){
       Serial.println("Connesso al broker MQTT!");}
     else{
       Serial.println("Connessione al broker MQTT fallita");
-  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(5000));
   continue;
     }
   }
@@ -83,7 +85,7 @@ void sendMQTTData(void *pvParameters){
 
   xSemaphoreGive(dataMutex);
 
-  vTaskDelay(1000 / portTICK_PERIOD_MS);
+  vTaskDelayUntil(&lastWakeTime, pdMS_TO_TICKS(1000));
   }
 }
 
