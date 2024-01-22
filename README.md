@@ -31,4 +31,13 @@ Per verificare l'avvenuta installazione è necessario eseguire:
 ## ACQUSITZIONE DEI DATI DA PARTE DELL'ESP32
 Nel progetto l'ESP32 acquisisce i dati dal sensore di luminosità(BH1750), dal sensore di temperatura e pressione(BMP280) e dal modulo RTC (PCF8523). 
 
-Questi dati saranno poi, attraverso il protocollo MQTT, inviati al broker MQTT per poi renderli visibili su un'interfaccia web. 
+Questi dati saranno poi, attraverso il protocollo MQTT, inviati al broker MQTT per poi renderli visibili su un'interfaccia web, creata con l'applicatico Node-RED intallato tramite terminale con il comando: 
+
+ ```
+ npm install -g --unsafe-perm node-red
+ ```
+E si otterrà cosi un'interfaccia del tipo in figura. 
+
+<p align="center" style="margin-top: 10px;margin-bottom: 10px">
+<img src="https://github.com/S1090231/Progetto-SOD/blob/main/nodered.png" width="550" > 
+</p>
