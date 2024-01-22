@@ -20,9 +20,15 @@ Per lo sviluppo del progetto è stato utilizzato l'IDE ArduinoIDE
 ## CONFIGURAZIONE MQTT
 
 Per quanto riguarda la configurazione del protocollo MQTT, è necessario installare, all'interno della macchina virtuale con OS Ubuntu 22.04, il software Mosquitto con il seguente comando: 
+ ```
+ sudo apt install -y mosquitto mosquitto-clients
+ ```
+Per verificare l'avvenuta installazione è necessario eseguire: 
 
+ ```
+ sudo systemfctl status mosquitto
+ ```
+## ACQUSITZIONE DEI DATI DA PARTE DELL'ESP32
+Nel progetto l'ESP32 acquisisce i dati dal sensore di luminosità(BH1750), dal sensore di temperatura e pressione(BMP280) e dal modulo RTC (PCF8523). 
 
-<p align="center" style="margin-top: 10px;margin-bottom: 10px">
-<img src="https://github.com/S1090231/Progetto-SOD/blob/main/intall msquitto.png" width="550" > 
-</p>
-
+Questi dati saranno poi, attraverso il protocollo MQTT, inviati al broker MQTT per poi renderli visibili su un'interfaccia web. 
