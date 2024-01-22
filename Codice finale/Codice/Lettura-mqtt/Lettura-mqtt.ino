@@ -5,6 +5,10 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 #include <BH1750.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+#include <freertos/semphr.h>
+
 
 RTC_PCF8523 rtc;
 TaskHandle_t TaskSensorData;
@@ -42,7 +46,7 @@ void readSensorData(void *pvParameters){
                               String(now.minute()) + ":" +
                               String(now.second());
 //richiesta di accesso al semaforo
-    xSemaphoreTake(dataMutex, portMAX_DELAY);
+xSemaphoreTake(dataMutex, portMAX_DELAY);
 
     luminosity = currentLuminosity;
     temperature = currentTemperature;
@@ -50,22 +54,23 @@ void readSensorData(void *pvParameters){
     timestamp = currentTimestamp;
 
 //rilascia il semaforo acquisito precedentemente
-    xSemaphoreGive(dataMutex);
+xSemaphoreGive(dataMutex);
 
-    vTaskDelay(5000 / portTICK_PERIOD_MS);
-  }
+vTaskDelay(5000 / portTICK_PERIOD_MS);
 }
+}
+
 
 //Funzione per riconnettersi al broker MQTT in caso di disconnessione e per inviare dati
 void sendMQTTData(void *pvParameters){
   while(1){
     if(!client.connected()){
       if(client.connect("ESP32Client")){
-      Serial.println("Connesso al broker MQTT!");
-    }else{
+      Serial.println("Connesso al broker MQTT!");}
+    else{
       Serial.println("Connessione al broker MQTT fallita");
-      vTaskDelay(5000 / portTICK_PERIOD_MS);
-      continue;
+  vTaskDelay(5000 / portTICK_PERIOD_MS);
+  continue;
     }
   }
 
@@ -83,29 +88,30 @@ void sendMQTTData(void *pvParameters){
 }
 
  void setup() {
-  Serial.begin(115200);
-  Wire.begin();
+
+ Serial.begin(115200);
+ Wire.begin();
 
   if(!bmp.begin()){
     Serial.println("Errore inizializzazione BMP280");
-    while(1);
+  while(1);
   }
 
   if(!lightMeter.begin()){
     Serial.println("Errore inizializzazione BH1750");
-    while(1);
+  while(1);
   }
 
   if(!rtc.begin()){
     Serial.println("Impossibile trovare il modulo RTC");
-    while(1);
+  while(1);
   }
   
 //crea un semaforo di mutua esclusione
-  dataMutex = xSemaphoreCreateMutex();
+dataMutex = xSemaphoreCreateMutex();
 
   //Connessione alla WiFi
-  WiFi.begin(ssid, password );
+WiFi.begin(ssid, password );
   while(WiFi.status() != WL_CONNECTED) {
     delay(250);
     Serial.println("Connessione WiFi in corso...");
@@ -114,27 +120,27 @@ void sendMQTTData(void *pvParameters){
   Serial.println(WiFi.localIP());
 
 //Configurazione del client MQTT
-  client.setServer(mqtt_server, mqtt_port);
+client.setServer(mqtt_server, mqtt_port);
 
-  xTaskCreatePinnedToCore(
-    readSensorData,
-    "TaskSensorData",
-    10000,
-    NULL,
-    1,
-    &TaskSensorData,
-    0); //core 0
+xTaskCreatePinnedToCore(
+  readSensorData,
+  "TaskSensorData",
+  10000,
+  NULL,
+  1,
+  &TaskSensorData,
+  0); //core 0
 
     
 
-    xTaskCreatePinnedToCore(
-    sendMQTTData,
-    "TaskMQTT",
-    10000,
-    NULL,
-    1,
-    &TaskMQTT,
-    1); }
+xTaskCreatePinnedToCore(
+  sendMQTTData,
+  "TaskMQTT",
+  10000,
+  NULL,
+  1,
+  &TaskMQTT,
+  1); }
 
     
 
