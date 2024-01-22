@@ -35,10 +35,15 @@ String timestamp =" ";
 void readSensorData(void *pvParameters){
   TickType_t lastWakeTime = xTaskGetTickCount();
   while(1){
+
+    DateTime pcTime = DateTime(F(__DATE__), F(__TIME__));
+    rtc.adjust(pcTime);
+    
     float currentLuminosity = lightMeter.readLightLevel();
     float currentTemperature = bmp.readTemperature();
     float currentPressure = bmp.readPressure() / 100.0F;
 
+    
     DateTime now = rtc.now();
     String currentTimestamp = String(now.year()) + "-" +
                               String(now.month()) + "-" + 
@@ -159,5 +164,5 @@ xTaskCreatePinnedToCore(
     
 
 void loop(){
-  delay(5000);
+    delay(5000);
 }
