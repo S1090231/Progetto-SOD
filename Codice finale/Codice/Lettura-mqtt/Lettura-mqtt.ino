@@ -21,7 +21,7 @@ BH1750 lightMeter;
 
 
 const char* ssid = "TP-Link_BB96";
-const char* password = "Casagatti1";
+const char* password = "*******";
 const char* mqtt_server = "192.168.1.105"; //Indirizzo IP del server MQTT
 const int mqtt_port = 1883;
 
