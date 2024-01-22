@@ -10,3 +10,5 @@ Gli obietti di questo progetto consistono in:
 <img src="https://github.com/S1090231/Progetto-SOD/blob/main/schema iniziale.png" width="550" > 
 </p>
 
+## AMBIENTE DI SVILUPPO
+Per lo sviluppo del progetto è stato utilizzato l'IDE ArduinoIDE
