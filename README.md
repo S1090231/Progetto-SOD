@@ -21,3 +21,8 @@ Per lo sviluppo del progetto è stato utilizzato l'IDE ArduinoIDE
 
 Per quanto riguarda la configurazione del protocollo MQTT, è necessario installare, all'interno della macchina virtuale con OS Ubuntu 22.04, il software Mosquitto con il seguente comando: 
 
+
+<p align="center" style="margin-top: 10px;margin-bottom: 10px">
+<img src="https://github.com/S1090231/Progetto-SOD/blob/main/intall msquitto.png" width="550" > 
+</p>
+
